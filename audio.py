@@ -174,6 +174,7 @@ instrument = 0
 pitch_offset = 0
 num_instruments = len(oscilators)
 instruments[0][0].play()
+print("All Instruments Loaded")
 while(1): 
     try:
         for e in pygame.event.get():
