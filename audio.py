@@ -89,6 +89,9 @@ def triangleWave(x):
 def squareWave(x):
     return triangleWave(-x+np.pi)+triangleWave(x)
 
+def purple(x):
+    return (2*triangleWave(x)+3*squareWave(x)+np.sin(x)/2)/6
+
 def adsrEnvelope(x,a,d,s,r):
     if x>0 and x<=a:
         return (1/a)*x
@@ -149,7 +152,7 @@ class Noise:
         self.sound.play()
         return
 
-oscilators = [np.sin,triangleWave,squareWave]
+oscilators = [purple,np.sin,triangleWave,squareWave]
 instruments = []
 for j in range(0, len(oscilators)):
     instruments.append([])
