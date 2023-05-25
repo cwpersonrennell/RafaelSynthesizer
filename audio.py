@@ -87,7 +87,7 @@ def guitarWave(x,h=1,l=0.1,N=10):
     result = 0
     def A(n):
         return (2*h*1)/(np.pi*np.pi*(1-l)*n*n)*np.sin(n*np.pi*l)
-    for i in range(0,N):
+    for i in range(1,N+1):
         result+=A(i)*np.cos(i*x)
     return result
     
