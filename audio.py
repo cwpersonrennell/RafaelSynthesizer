@@ -11,7 +11,6 @@ from pygame import sndarray, joystick
 import pygame
 pygame.init()
 joystick.init()
-print(pygame.mixer.get_init())
 joysticks = [joystick.Joystick(x) for x in range(joystick.get_count())]
 for joy in joysticks:
     joy.init()
@@ -155,7 +154,10 @@ instruments = []
 for j in range(0, len(oscilators)):
     instruments.append([])
     for i in range(0,len(frequencies)):
-        instruments[j].append(Noise(frequencies[i],0.5,0.125,oscilators[j]))
+        amp = 0.125
+        if oscilators[j]==np.sin:
+            amp = 0.5    
+        instruments[j].append(Noise(frequencies[i],0.5,amp,oscilators[j]))
 
 instrument = 0
 pitch_offset = 0
@@ -165,6 +167,7 @@ while(1):
     try:
         for e in pygame.event.get():
             if(e.type == pygame.JOYAXISMOTION):
+                print(e)
                 if(e.axis == 0):
                     instrument=(round(e.value)+instrument)%num_instruments
                 if(e.axis == 1):
