@@ -83,10 +83,10 @@ frequencies = [A2, As2,B2,C2,Cs2,D2,Ds2,E2,F2,Fs2,G2,Gs2,
 
 fs = 44100
 
-def guitarWave(x,h=1,l=0.1,N=10):
+def guitarWave(x,h=1,l=0.5,N=10):
     result = 0
     def A(n):
-        return (2*h*1)/(np.pi*np.pi*(1-l)*n*n)*np.sin(n*np.pi*l)
+        return h/(np.pi*np.pi*(1-l)*n*n)*(np.sin(n*np.pi*l))
     for i in range(1,N+1):
         result+=A(i)*np.cos(i*x)
     return result
@@ -173,13 +173,13 @@ for j in range(0, len(oscilators)):
 instrument = 0
 pitch_offset = 0
 num_instruments = len(oscilators)
-instruments[0][0].play()
+instruments[0][15].play()
 print("All Instruments Loaded")
 while(1): 
     try:
         for e in pygame.event.get():
             if(e.type == pygame.JOYAXISMOTION):
-                print(e)
+                joy = e.joy
                 if(e.axis == 0):
                     instrument=(round(e.value)+instrument)%num_instruments
                 if(e.axis == 1):
