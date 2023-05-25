@@ -82,6 +82,15 @@ frequencies = [A2, As2,B2,C2,Cs2,D2,Ds2,E2,F2,Fs2,G2,Gs2,
                A5, As5,B5,C5,Cs5,D5,Ds5,E5,F5,Fs5,G5,Gs5]
 
 fs = 44100
+
+def guitarWave(x,h=1,l=0.1,N=10):
+    result = 0
+    def A(n):
+        return (2*h*1)/(np.pi*np.pi*(1-l)*n*n)*np.sin(n*np.pi*l)
+    for i in range(0,N):
+        result+=A(i)*np.cos(i*x)
+    return result
+    
 def triangleWave(x):
     #f(aX) = ax%3 --> period 3/a
     return (x%(2*np.pi))/(2*np.pi)-0.5
@@ -153,17 +162,12 @@ class Noise:
         self.sound.play()
         return
 
-oscilators = [purple,purple,np.sin,triangleWave,squareWave]
+oscilators = [guitarWave,triangleWave,squareWave]
 instruments = []
 for j in range(0, len(oscilators)):
     instruments.append([])
     for i in range(0,len(frequencies)):
         amp = 0.125
-        if oscilators[j]==np.sin:
-            amp = 0.25
-        if j == 0:
-            N = Noise(frequencies[i],0.5,amp,oscilators[j])
-            N.adsr(N.duration/10,N.duration/10,0,0.8*N.duration)
         instruments[j].append(Noise(frequencies[i],0.5,amp,oscilators[j]))
 
 instrument = 0
