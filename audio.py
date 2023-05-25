@@ -156,7 +156,7 @@ for j in range(0, len(oscilators)):
     for i in range(0,len(frequencies)):
         amp = 0.125
         if oscilators[j]==np.sin:
-            amp = 0.5    
+            amp = 0.25    
         instruments[j].append(Noise(frequencies[i],0.5,amp,oscilators[j]))
 
 instrument = 0
