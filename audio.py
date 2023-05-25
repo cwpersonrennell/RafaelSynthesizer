@@ -117,6 +117,7 @@ class Noise:
         self.d = d
         self.s = s
         self.r = r
+        self.generateWaveForm()
         
     def generateWaveForm(self):
         self.string = f"{round(self.note)}{self.duration}{self.amplitude}{self.oscili.__name__}{self.a}{self.d}{self.s}{self.r}"
@@ -152,14 +153,17 @@ class Noise:
         self.sound.play()
         return
 
-oscilators = [purple,np.sin,triangleWave,squareWave]
+oscilators = [purple,purple,np.sin,triangleWave,squareWave]
 instruments = []
 for j in range(0, len(oscilators)):
     instruments.append([])
     for i in range(0,len(frequencies)):
         amp = 0.125
         if oscilators[j]==np.sin:
-            amp = 0.25    
+            amp = 0.25
+        if j == 0:
+            N = Noise(frequencies[i],0.5,amp,oscilators[j])
+            N.adsr(N.duration/10,N.duration/10,0,0.8*N.duration)
         instruments[j].append(Noise(frequencies[i],0.5,amp,oscilators[j]))
 
 instrument = 0
