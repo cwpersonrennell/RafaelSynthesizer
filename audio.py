@@ -358,14 +358,14 @@ while(1):
             if(not instruments[instrument][note].channel.get_busy()):
                 DECAYING.remove(button)
                 SUSTAINING.append(button)
-                instruments[instrument][note].play(stage=NOISE_DECAY)
+            instruments[instrument][note].play(stage=NOISE_DECAY)
         
         for button in ATTACKING:
             note = (button+pitch_offset)%len(instruments[instrument])
             if(not instruments[instrument][note].channel.get_busy()):
                 ATTACKING.remove(button)
                 DECAYING.append(button)
-                instruments[instrument][note].play(stage=NOISE_ATTACK)
+            instruments[instrument][note].play(stage=NOISE_ATTACK)
         
         #print(len(DECAYING))
     except Exception as e:
