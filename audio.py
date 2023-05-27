@@ -164,7 +164,7 @@ class Noise:
         
         if type(val)=="NoneType" or val == None: 
             #print("Getting new Channel")
-            self._channel = pygame.mixer.find_channel(True)
+            self._channel = pygame.mixer.find_channel()
         else:
             #print("Setting channel to: ",val)
             self._channel = val
@@ -285,22 +285,22 @@ class Noise:
                 # print("NOISE_RELEASE:",self.note)
                 # print(self.channel)
                 self.channel.stop()
-                self.channel = self.release.play()
+                self.channel.play(self.release)
                 return self.channel
                 
             #if(self.channel.get_busy()): return self.channel
             
             if stage == NOISE_COMPLETE:
-                self.channel = self.sound.play()
+                self.channel.play(self.sound)
            
             elif stage == NOISE_ATTACK:
-                self.channel = self.attack.play()
+                self.channel.play(self.attack)
             elif stage == NOISE_DECAY:
-                self.channel = self.decay.play()
+                self.channel.play(self.decay)
             
             elif stage == NOISE_SUSTAIN:
                 if(not self.channel.get_busy()):
-                    self.channel = self.sustain.play(-1)
+                    self.channel.play(self.sustain,-1)
             
             return self.channel
         except AttributeError as e:
@@ -329,10 +329,16 @@ STOPPING =[]
 print("All Instruments Loaded")
 
 NOTE_PLAY=[]
+BUTTON_STATE=[]
 for i in range(0,12):
     NOTE_PLAY.append(False)
-   
+    BUTTON_STATE.append(0)
+  
+
 while(1):
+    for i in range(0,12):
+        BUTTON_STATE[i]=joystick.Joystick(0).get_button(i)
+    #print(BUTTON_STATE)
     try:
         for e in pygame.event.get():
             if(e.type == pygame.KEYDOWN):
@@ -384,23 +390,28 @@ while(1):
         
         for button in SUSTAINING:
             note = (button+pitch_offset)%len(instruments[instrument])
-            instruments[instrument][note].play(stage=NOISE_SUSTAIN)
+            if(not instruments[instrument][note].channel.get_busy() or BUTTON_STATE[button]==1):
+               instruments[instrument][note].play(stage=NOISE_SUSTAIN)
+#            print(BUTTON_STATE[button])
+            else:
+                RELEASING.append(button)
+                SUSTAINING.remove(button)
             
         for button in DECAYING:
             note = (button+pitch_offset)%len(instruments[instrument])
-            #if(not instruments[instrument][note].channel.get_busy()):
-            DECAYING.remove(button)
-            SUSTAINING.append(button)
-            #else:
-            instruments[instrument][note].play(stage=NOISE_DECAY)
+            if(not instruments[instrument][note].channel.get_busy() or BUTTON_STATE[button]==0):
+                DECAYING.remove(button)
+                SUSTAINING.append(button)
+            else:
+                instruments[instrument][note].play(stage=NOISE_DECAY)
         
         for button in ATTACKING:
             note = (button+pitch_offset)%len(instruments[instrument])
-        #    if(not instruments[instrument][note].channel.get_busy()):
-            ATTACKING.remove(button)
-            DECAYING.append(button)
-         #   else:
-            instruments[instrument][note].play(stage=NOISE_ATTACK)
+            if(not instruments[instrument][note].channel.get_busy() or BUTTON_STATE[button]==0):
+                ATTACKING.remove(button)
+                DECAYING.append(button)
+            else:
+                instruments[instrument][note].play(stage=NOISE_ATTACK)
         #print(SUSTAINING)
         #print(len(DECAYING))
     except AttributeError as e:
