@@ -358,7 +358,6 @@ while(1):
             if(not instruments[instrument][note].channel.get_busy()):
                 DECAYING.remove(button)
                 SUSTAINING.append(button)
-            else:
                 instruments[instrument][note].play(stage=NOISE_DECAY)
         
         for button in ATTACKING:
@@ -366,7 +365,6 @@ while(1):
             if(not instruments[instrument][note].channel.get_busy()):
                 ATTACKING.remove(button)
                 DECAYING.append(button)
-            else:
                 instruments[instrument][note].play(stage=NOISE_ATTACK)
         
         #print(len(DECAYING))
