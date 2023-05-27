@@ -361,7 +361,7 @@ while(1):
                     RELEASING = []
                     DECAYING = []
                     continue
-                if e.button not in ATTACKING:
+                if e.button not in ATTACKING and e.button not in SUSTAINING:
                     ATTACKING.append(e.button)
                     
             if e.type == pygame.JOYBUTTONUP:
