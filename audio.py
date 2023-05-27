@@ -155,6 +155,20 @@ class Noise:
         #Generates all corresponding wave forms/files
         self.generateAll()
     
+    @property
+    def channel(self):
+        return self._channel
+    
+    @channel.setter
+    def channel(self,val):
+        
+        if type(val)=="NoneType" or val == None: 
+            #print("Getting new Channel")
+            self._channel = pygame.mixer.find_channel(True)
+        else:
+            #print("Setting channel to: ",val)
+            self._channel = val
+    
     def generateAll(self):
         self.generateWaveForm()
         self.generateAttack()
@@ -211,6 +225,7 @@ class Noise:
             pass
         noise =  generateADSRNoise(self.note,self.period,0,0,self.period,0,self.amplitude,self.oscili)
         np.save(string,noise)
+        
         self.sustain=sndarray.make_sound(noise)
         
     def generateRelease(self):
@@ -261,14 +276,14 @@ class Noise:
         self.channel.stop()
             
     def play(self,stage=NOISE_COMPLETE):
+       # print("Loop play...",stage,self.channel)
         try:
             #If releasing a sustained note, the channel will be busy
             #so in order to release it, we need to check the stage here
             #instead of later
             if stage == NOISE_RELEASE:
-                if not self.channel:
-                    pygame.mixer.stop()
-                    self.channel = pygame.mixer.find_channel()
+                # print("NOISE_RELEASE:",self.note)
+                # print(self.channel)
                 self.channel.stop()
                 self.channel = self.release.play()
                 return self.channel
@@ -276,19 +291,23 @@ class Noise:
             #if(self.channel.get_busy()): return self.channel
             
             if stage == NOISE_COMPLETE:
-                self.channel=self.sound.play()
+                self.channel = self.sound.play()
+           
             elif stage == NOISE_ATTACK:
                 self.channel = self.attack.play()
             elif stage == NOISE_DECAY:
                 self.channel = self.decay.play()
             elif stage == NOISE_SUSTAIN:
-                self.channel = self.sustain.play(-1)
+                if(not self.channel.get_busy()):
+                    self.channel = self.sustain.play(-1)
             
+            print(self.channel.get_busy())
             return self.channel
-        except Exception as e:
-            print(e)
-            pygame.mixer.stop()
-            sys.exit(1)
+        except AttributeError as e:
+            #print(e)
+            self.channel = pygame.mixer.find_channel(True)
+            #pygame.mixer.stop()
+            #sys.exit(1)
 oscilators = [guitarWave,triangleWave,squareWave]
 instruments = []
 for j in range(0, len(oscilators)):
@@ -326,18 +345,13 @@ while(1):
                 if(e.axis == 1):
                     pitch_offset+=round(e.value)
             if(e.type == pygame.JOYBUTTONDOWN):
-                note = (e.button+pitch_offset)%len(instruments[instrument])
+                #print("BUTTON DOWN:", e.button)
                 if(e.button==11):
-                    pygame.quit()
-                    break
-                
-                if(e.button not in ATTACKING and e.button not in DECAYING 
-                   and e.button not in SUSTAINING and e.button not in RELEASING):
-                    if(not instruments[instrument][note].channel.get_busy()):
-                        ATTACKING.append(e.button)
+                    SUSTAINING = []
+
+                ATTACKING.append(e.button)
                     
             if e.type == pygame.JOYBUTTONUP:
-                note = (e.button+pitch_offset)%len(instruments[instrument])
                 if e.button in SUSTAINING:
                     SUSTAINING.remove(e.button)
                     RELEASING.append(e.button)
@@ -368,8 +382,11 @@ while(1):
                 DECAYING.append(button)
             else:
                 instruments[instrument][note].play(stage=NOISE_ATTACK)
-        
+        #print(SUSTAINING)
         #print(len(DECAYING))
+    except AttributeError as e:
+        print(e)
+        break
     except Exception as e:
         print(e)
         break
