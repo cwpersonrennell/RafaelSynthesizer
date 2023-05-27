@@ -297,11 +297,11 @@ class Noise:
                 self.channel = self.attack.play()
             elif stage == NOISE_DECAY:
                 self.channel = self.decay.play()
+            
             elif stage == NOISE_SUSTAIN:
                 if(not self.channel.get_busy()):
                     self.channel = self.sustain.play(-1)
             
-            #print(self.channel.get_busy())
             return self.channel
         except AttributeError as e:
             #print(e)
@@ -327,14 +327,18 @@ SUSTAINING = []
 RELEASING = []
 STOPPING =[]
 print("All Instruments Loaded")
-button_state = 0
-button_last_state = 0
-while(1): 
+
+NOTE_PLAY=[]
+for i in range(0,12):
+    NOTE_PLAY.append(False)
+   
+while(1):
     try:
         for e in pygame.event.get():
             if(e.type == pygame.KEYDOWN):
                 print("")
                 if(e.key==pygame.K_LEFT):
+                    
                     pitch_offset-=1
                 if(e.key==pygame.K_RIGHT):
                     pitch_offset+=1                    
@@ -343,6 +347,7 @@ while(1):
                 if(e.axis == 0):
                     instrument=(round(e.value)+instrument)%num_instruments
                 if(e.axis == 1):
+                    print(ATTACKING,DECAYING,SUSTAINING,RELEASING)
                     pitch_offset+=round(e.value)
             if(e.type == pygame.JOYBUTTONDOWN):
                 #print("BUTTON DOWN:", e.button)
@@ -365,10 +370,12 @@ while(1):
                     RELEASING.append(e.button)
                     
         stage = NOISE_COMPLETE
-        for button in STOPPING:
-            note = (button+pitch_offset)%len(instruments[instrument])
-            instruments[instrument][note].stop()
-            STOPPING.remove(button)
+        if(len(STOPPING)>0):
+            for button in STOPPING:
+                note = (button+pitch_offset)%len(instruments[instrument])
+                instruments[instrument][note].stop()
+                STOPPING.remove(button)
+            pygame.mixer.stop()
             
         for button in RELEASING:
             note = (button+pitch_offset)%len(instruments[instrument])
@@ -381,19 +388,19 @@ while(1):
             
         for button in DECAYING:
             note = (button+pitch_offset)%len(instruments[instrument])
-            if(not instruments[instrument][note].channel.get_busy()):
-                DECAYING.remove(button)
-                SUSTAINING.append(button)
-            else:
-                instruments[instrument][note].play(stage=NOISE_DECAY)
+            #if(not instruments[instrument][note].channel.get_busy()):
+            DECAYING.remove(button)
+            SUSTAINING.append(button)
+            #else:
+            instruments[instrument][note].play(stage=NOISE_DECAY)
         
         for button in ATTACKING:
             note = (button+pitch_offset)%len(instruments[instrument])
-            if(not instruments[instrument][note].channel.get_busy()):
-                ATTACKING.remove(button)
-                DECAYING.append(button)
-            else:
-                instruments[instrument][note].play(stage=NOISE_ATTACK)
+        #    if(not instruments[instrument][note].channel.get_busy()):
+            ATTACKING.remove(button)
+            DECAYING.append(button)
+         #   else:
+            instruments[instrument][note].play(stage=NOISE_ATTACK)
         #print(SUSTAINING)
         #print(len(DECAYING))
     except AttributeError as e:
