@@ -92,10 +92,10 @@ NOISE_SUSTAIN = 3
 NOISE_RELEASE = 4
 NOISE_COMPLETE= 5
 
-def guitarWave(x,h=0.75,l=0.25,N=10):
+def guitarWave(x,h=0.3,l=0.1,N=5, L=1):
     result = 0
     def A(n):
-        return h/(np.pi*np.pi*(1-l)*n*n)*(np.sin(n*np.pi*l))
+        return h/(np.pi*np.pi*l/L*(1-l/L)*n*n)*(np.sin(n*np.pi*l/L))
     for i in range(1,N+1):
         result+=A(i)*np.cos(i*x)
     return result
@@ -129,7 +129,7 @@ def generateADSRNoise(note,T,a,d,s,r,amplitude,oscili):
         noise.append(amplitude*adsrEnvelope(t[i],a,d,s,r)*oscili(2*np.pi*note*t[i]))
     noise = np.array(noise)
     #convert to a signed 16 bit integer for pygame mixer stereo
-    noise = (noise*65536).astype(np.int16)
+    noise = (noise*65536/2).astype(np.int16)
     #reshape into a 2 dimensional array (stereo)
     noise = np.repeat(noise.reshape(size, 1), 2, axis = 1)
     return noise
@@ -142,7 +142,7 @@ class Noise:
         self.amplitude =  amplitude
         self.oscili = oscili
         
-        self.channel  = pygame.mixer.find_channel()
+        self.channel  = pygame.mixer.find_channel(True)
         
         self.stage   = NOISE_IDLE
         self.attack  = []
@@ -150,24 +150,10 @@ class Noise:
         self.sustain = []
         self.release = []
         
-        self.adsr(3*self.duration/10, 3*self.duration/10,3/10*self.duration,0.25*self.duration)
+        self.adsr(self.duration/10, self.duration/10,3/10*self.duration,0.5*self.duration)
     
         #Generates all corresponding wave forms/files
         self.generateAll()
-    
-    @property
-    def channel(self):
-        return self._channel
-    
-    @channel.setter
-    def channel(self,val):
-        
-        if type(val)=="NoneType" or val == None: 
-            #print("Getting new Channel")
-            self._channel = pygame.mixer.find_channel()
-        else:
-            #print("Setting channel to: ",val)
-            self._channel = val
     
     def generateAll(self):
         self.generateWaveForm()
@@ -277,37 +263,33 @@ class Noise:
             
     def play(self,stage=NOISE_COMPLETE):
        # print("Loop play...",stage,self.channel)
-        try:
-            #If releasing a sustained note, the channel will be busy
-            #so in order to release it, we need to check the stage here
-            #instead of later
-            if stage == NOISE_RELEASE:
-                # print("NOISE_RELEASE:",self.note)
-                # print(self.channel)
-                self.channel.stop()
-                self.channel.play(self.release)
-                return self.channel
-                
-            #if(self.channel.get_busy()): return self.channel
-            
-            if stage == NOISE_COMPLETE:
-                self.channel.play(self.sound)
-           
-            elif stage == NOISE_ATTACK:
-                self.channel.play(self.attack)
-            elif stage == NOISE_DECAY:
-                self.channel.play(self.decay)
-            
-            elif stage == NOISE_SUSTAIN:
-                if(not self.channel.get_busy()):
-                    self.channel.play(self.sustain,-1)
-            
+
+        #If releasing a sustained note, the channel will be busy
+        #so in order to release it, we need to check the stage here
+        #instead of later
+        if stage == NOISE_RELEASE:
+            # print("NOISE_RELEASE:",self.note)
+            # print(self.channel)
+            self.channel.stop()
+            self.channel.play(self.release)
             return self.channel
-        except AttributeError as e:
-            #print(e)
-            self.channel = pygame.mixer.find_channel(True)
-            #pygame.mixer.stop()
-            #sys.exit(1)
+            
+        #if(self.channel.get_busy()): return self.channel
+        
+        if stage == NOISE_COMPLETE:
+            self.channel.play(self.sound)
+       
+        elif stage == NOISE_ATTACK:
+            self.channel.play(self.attack)
+        elif stage == NOISE_DECAY:
+            self.channel.play(self.decay)
+        
+        elif stage == NOISE_SUSTAIN:
+            if(not self.channel.get_busy()):
+                self.channel.play(self.sustain,-1)
+        
+        return self.channel
+
 oscilators = [guitarWave,triangleWave,squareWave]
 instruments = []
 for j in range(0, len(oscilators)):
@@ -315,11 +297,15 @@ for j in range(0, len(oscilators)):
     for i in range(0,len(frequencies)):
         amp = 0.125
         instruments[j].append(Noise(frequencies[i],0.5,amp,oscilators[j]))
+        #print(dir(instruments[j][i].channel))
 
 instrument = 0
 pitch_offset = 0
 num_instruments = len(oscilators)
-instruments[0][15].play()
+for i in range(0,round(len(frequencies)/2)):
+    i+=i
+    instruments[0][i].play()
+    pygame.time.delay(500)
 
 ATTACKING = []
 DECAYING = []
