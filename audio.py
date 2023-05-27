@@ -6,6 +6,8 @@ Created on Wed May 17 20:41:11 2023
 """
 
 import numpy as np
+import sys
+
 #import sounddevice
 from pygame import sndarray, joystick
 import pygame
@@ -83,7 +85,14 @@ frequencies = [A2, As2,B2,C2,Cs2,D2,Ds2,E2,F2,Fs2,G2,Gs2,
 
 fs = 44100
 
-def guitarWave(x,h=1,l=0.5,N=10):
+NOISE_IDLE = 0
+NOISE_ATTACK = 1
+NOISE_DECAY = 2
+NOISE_SUSTAIN = 3
+NOISE_RELEASE = 4
+NOISE_COMPLETE= 5
+
+def guitarWave(x,h=0.75,l=0.25,N=10):
     result = 0
     def A(n):
         return h/(np.pi*np.pi*(1-l)*n*n)*(np.sin(n*np.pi*l))
@@ -112,22 +121,113 @@ def adsrEnvelope(x,a,d,s,r):
         return (-0.75/(r))*(x-a-d-s)+0.75
     return 0
 
+def generateADSRNoise(note,T,a,d,s,r,amplitude,oscili):
+    size = round(fs*T)
+    t=np.linspace(0,T,size)
+    noise=[]
+    for i in range(0,size):
+        noise.append(amplitude*adsrEnvelope(t[i],a,d,s,r)*oscili(2*np.pi*note*t[i]))
+    noise = np.array(noise)
+    #convert to a signed 16 bit integer for pygame mixer stereo
+    noise = (noise*65536).astype(np.int16)
+    #reshape into a 2 dimensional array (stereo)
+    noise = np.repeat(noise.reshape(size, 1), 2, axis = 1)
+    return noise
+    
 class Noise:
     def __init__(self, note, duration=0.25, amplitude=0.125,oscili = np.sin):
         self.note      = note
+        self.period    = 1/note
         self.duration  = duration
         self.amplitude =  amplitude
         self.oscili = oscili
-        self.adsr(self.duration/10, self.duration/10,3/10*self.duration,0.5*self.duration)
+        
+        self.channel  = pygame.mixer.find_channel()
+        
+        self.stage   = NOISE_IDLE
+        self.attack  = []
+        self.decay   = []
+        self.sustain = []
+        self.release = []
+        
+        self.adsr(3*self.duration/10, 3*self.duration/10,3/10*self.duration,0.25*self.duration)
+    
+        #Generates all corresponding wave forms/files
+        self.generateAll()
+    
+    def generateAll(self):
         self.generateWaveForm()
+        self.generateAttack()
+        self.generateDecay()
+        self.generateSustain()
+        self.generateRelease()
     
     def adsr(self,a,d,s,r):
         self.a = a
         self.d = d
         self.s = s
         self.r = r
-        self.generateWaveForm()
         
+    
+    def generateAttack(self):
+        string = f"Attack{self.a}{round(self.note)}{self.duration}{self.amplitude}{self.oscili.__name__}"
+        string = "./.npyaudio/"+string.replace(".","")+".npy"
+        noise = []
+        try:
+            noise = np.load(string)
+            self.attack=sndarray.make_sound(noise)
+            return
+        except:
+            pass
+        
+        noise =  generateADSRNoise(self.note,self.a,self.a,0,0,0,self.amplitude,self.oscili)
+        np.save(string,noise)
+        self.attack=sndarray.make_sound(noise)
+        
+    def generateDecay(self):
+        string = f"Decay{self.d}{round(self.note)}{self.duration}{self.amplitude}{self.oscili.__name__}"
+        string = "./.npyaudio/"+string.replace(".","")+".npy"
+        noise = []
+        try:
+            noise = np.load(string)
+            self.decay=sndarray.make_sound(noise)
+            return
+        except:
+            pass
+        
+        noise =  generateADSRNoise(self.note,self.d,0,self.d,0,0,self.amplitude,self.oscili)
+        np.save(string,noise)
+        self.decay=sndarray.make_sound(noise)
+   
+    def generateSustain(self):
+        string = f"Sustain{round(self.note)}{self.duration}{self.amplitude}{self.oscili.__name__}"
+        string = "./.npyaudio/"+string.replace(".","")+".npy"
+        noise = []
+        try:
+            noise = np.load(string)
+            self.sustain=sndarray.make_sound(noise)
+            return
+        except:
+            pass
+        noise =  generateADSRNoise(self.note,self.period,0,0,self.period,0,self.amplitude,self.oscili)
+        np.save(string,noise)
+        self.sustain=sndarray.make_sound(noise)
+        
+    def generateRelease(self):
+        string = f"Release{self.r}{round(self.note)}{self.duration}{self.amplitude}{self.oscili.__name__}"
+        string = "./.npyaudio/"+string.replace(".","")+".npy"
+        noise = []
+        try:
+            noise = np.load(string)
+            self.release=sndarray.make_sound(noise)
+            return
+        except:
+            pass
+        
+        noise =  generateADSRNoise(self.note,self.r,0,0,0,self.r,self.amplitude,self.oscili)
+        np.save(string,noise)
+        self.release=sndarray.make_sound(noise)
+    
     def generateWaveForm(self):
         self.string = f"{round(self.note)}{self.duration}{self.amplitude}{self.oscili.__name__}{self.a}{self.d}{self.s}{self.r}"
         self.string = "./.npyaudio/"+self.string.replace(".","") +".npy"
@@ -157,11 +257,38 @@ class Noise:
         #get the sound and store it
         self.sound = sndarray.make_sound(self.noise)
         
-    def play(self):
-        #playback the sound on a random channel
-        self.sound.play()
-        return
-
+    def stop(self):
+        self.channel.stop()
+            
+    def play(self,stage=NOISE_COMPLETE):
+        try:
+            #If releasing a sustained note, the channel will be busy
+            #so in order to release it, we need to check the stage here
+            #instead of later
+            if stage == NOISE_RELEASE:
+                if not self.channel:
+                    pygame.mixer.stop()
+                    self.channel = pygame.mixer.find_channel()
+                self.channel.stop()
+                self.channel = self.release.play()
+                return self.channel
+                
+            #if(self.channel.get_busy()): return self.channel
+            
+            if stage == NOISE_COMPLETE:
+                self.channel=self.sound.play()
+            elif stage == NOISE_ATTACK:
+                self.channel = self.attack.play()
+            elif stage == NOISE_DECAY:
+                self.channel = self.decay.play()
+            elif stage == NOISE_SUSTAIN:
+                self.channel = self.sustain.play(-1)
+            
+            return self.channel
+        except Exception as e:
+            print(e)
+            pygame.mixer.stop()
+            sys.exit(1)
 oscilators = [guitarWave,triangleWave,squareWave]
 instruments = []
 for j in range(0, len(oscilators)):
@@ -174,10 +301,24 @@ instrument = 0
 pitch_offset = 0
 num_instruments = len(oscilators)
 instruments[0][15].play()
+
+ATTACKING = []
+DECAYING = []
+SUSTAINING = []
+RELEASING = []
+
 print("All Instruments Loaded")
+button_state = 0
+button_last_state = 0
 while(1): 
     try:
         for e in pygame.event.get():
+            if(e.type == pygame.KEYDOWN):
+                print("KEY DOWN")
+                if(e.key==pygame.K_LEFT):
+                    pitch_offset-=1
+                if(e.key==pygame.K_RIGHT):
+                    pitch_offset+=1                    
             if(e.type == pygame.JOYAXISMOTION):
                 joy = e.joy
                 if(e.axis == 0):
@@ -185,11 +326,50 @@ while(1):
                 if(e.axis == 1):
                     pitch_offset+=round(e.value)
             if(e.type == pygame.JOYBUTTONDOWN):
+                note = (e.button+pitch_offset)%len(instruments[instrument])
                 if(e.button==11):
                     pygame.quit()
                     break
+                
+                if(e.button not in ATTACKING and e.button not in DECAYING 
+                   and e.button not in SUSTAINING and e.button not in RELEASING):
+                    if(not instruments[instrument][note].channel.get_busy()):
+                        ATTACKING.append(e.button)
+                    
+            if e.type == pygame.JOYBUTTONUP:
                 note = (e.button+pitch_offset)%len(instruments[instrument])
-                instruments[instrument][e.button+pitch_offset].play()
+                if e.button in SUSTAINING:
+                    SUSTAINING.remove(e.button)
+                    RELEASING.append(e.button)
+                    
+        stage = NOISE_COMPLETE
+        
+        for button in RELEASING:
+            note = (button+pitch_offset)%len(instruments[instrument])
+            RELEASING.remove(button)
+            instruments[instrument][note].play(stage=NOISE_RELEASE)
+        
+        for button in SUSTAINING:
+            note = (button+pitch_offset)%len(instruments[instrument])
+            instruments[instrument][note].play(stage=NOISE_SUSTAIN)
+            
+        for button in DECAYING:
+            note = (button+pitch_offset)%len(instruments[instrument])
+            if(not instruments[instrument][note].channel.get_busy()):
+                DECAYING.remove(button)
+                SUSTAINING.append(button)
+            else:
+                instruments[instrument][note].play(stage=NOISE_DECAY)
+        
+        for button in ATTACKING:
+            note = (button+pitch_offset)%len(instruments[instrument])
+            if(not instruments[instrument][note].channel.get_busy()):
+                ATTACKING.remove(button)
+                DECAYING.append(button)
+            else:
+                instruments[instrument][note].play(stage=NOISE_ATTACK)
+        
+        #print(len(DECAYING))
     except Exception as e:
         print(e)
         break
