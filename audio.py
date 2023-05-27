@@ -314,7 +314,7 @@ while(1):
     try:
         for e in pygame.event.get():
             if(e.type == pygame.KEYDOWN):
-                print("KEY DOWN")
+                print("")
                 if(e.key==pygame.K_LEFT):
                     pitch_offset-=1
                 if(e.key==pygame.K_RIGHT):
@@ -358,14 +358,16 @@ while(1):
             if(not instruments[instrument][note].channel.get_busy()):
                 DECAYING.remove(button)
                 SUSTAINING.append(button)
-            instruments[instrument][note].play(stage=NOISE_DECAY)
+            else:
+                instruments[instrument][note].play(stage=NOISE_DECAY)
         
         for button in ATTACKING:
             note = (button+pitch_offset)%len(instruments[instrument])
             if(not instruments[instrument][note].channel.get_busy()):
                 ATTACKING.remove(button)
                 DECAYING.append(button)
-            instruments[instrument][note].play(stage=NOISE_ATTACK)
+            else:
+                instruments[instrument][note].play(stage=NOISE_ATTACK)
         
         #print(len(DECAYING))
     except Exception as e:
