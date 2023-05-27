@@ -301,7 +301,7 @@ class Noise:
                 if(not self.channel.get_busy()):
                     self.channel = self.sustain.play(-1)
             
-            print(self.channel.get_busy())
+            #print(self.channel.get_busy())
             return self.channel
         except AttributeError as e:
             #print(e)
@@ -325,7 +325,7 @@ ATTACKING = []
 DECAYING = []
 SUSTAINING = []
 RELEASING = []
-
+STOPPING =[]
 print("All Instruments Loaded")
 button_state = 0
 button_last_state = 0
@@ -347,7 +347,15 @@ while(1):
             if(e.type == pygame.JOYBUTTONDOWN):
                 #print("BUTTON DOWN:", e.button)
                 if(e.button==11):
+                    STOPPING.extend(SUSTAINING)
+                    STOPPING.extend(RELEASING)
+                    STOPPING.extend(DECAYING)
+                    STOPPING.extend(ATTACKING)
                     SUSTAINING = []
+                    ATTACKING = []
+                    RELEASING = []
+                    DECAYING = []
+                    continue
 
                 ATTACKING.append(e.button)
                     
@@ -357,7 +365,11 @@ while(1):
                     RELEASING.append(e.button)
                     
         stage = NOISE_COMPLETE
-        
+        for button in STOPPING:
+            note = (button+pitch_offset)%len(instruments[instrument])
+            instruments[instrument][note].stop()
+            STOPPING.remove(button)
+            
         for button in RELEASING:
             note = (button+pitch_offset)%len(instruments[instrument])
             RELEASING.remove(button)
