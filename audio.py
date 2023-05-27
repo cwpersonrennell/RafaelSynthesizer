@@ -92,23 +92,50 @@ NOISE_SUSTAIN = 3
 NOISE_RELEASE = 4
 NOISE_COMPLETE= 5
 
-def guitarWave(x,h=0.3,l=0.1,N=5, L=1):
+def pianoWave(x,freq, L=1,v=0.23, l = 0.23, N=5):
+    c = freq*L/np.pi
+    
+    def k(n):
+        return n*np.pi/L
+    def w(n):
+        return c*n*np.pi/L
+    
+    def B(n):
+        return 2*v/w(n)*np.sin(n*np.pi*l/L)
+    
+    result=0
+    for i in range(1,N+1):
+        result+=B(i)*np.sin(w(i)*x)
+    return result
+
+def guitarWave(x,freq, h=0.3,l=0.5,N=5):
     result = 0
+    c = 425 #meters/sec
+    L = (c*np.pi)/freq
+    l = l*L
+    def k(n):
+        return n*np.pi/L
+    #harmonic frequencies
+    #note that w(1) = freq == base harmonic
+    def w(n):
+        return c*n*np.pi/L
+    
     def A(n):
         return h/(np.pi*np.pi*l/L*(1-l/L)*n*n)*(np.sin(n*np.pi*l/L))
+    
     for i in range(1,N+1):
-        result+=A(i)*np.cos(i*x)
+        result+=A(i)*np.cos(w(i)*x)
     return result
     
-def triangleWave(x):
+def triangleWave(x,freq):
     #f(aX) = ax%3 --> period 3/a
     return (x%(2*np.pi))/(2*np.pi)-0.5
 
-def squareWave(x):
-    return triangleWave(-x+np.pi)+triangleWave(x)
+def squareWave(x, freq):
+    return triangleWave(-x+np.pi,freq)+triangleWave(x,freq)
 
-def purple(x):
-    return (2*triangleWave(x)+3*squareWave(x)+np.sin(x)/2)/6
+def purple(x, freq):
+    return (2*triangleWave(x,freq)+3*squareWave(x,freq)+np.sin(freq*x)/2)/6
 
 def adsrEnvelope(x,a,d,s,r):
     if x>0 and x<=a:
@@ -126,7 +153,7 @@ def generateADSRNoise(note,T,a,d,s,r,amplitude,oscili):
     t=np.linspace(0,T,size)
     noise=[]
     for i in range(0,size):
-        noise.append(amplitude*adsrEnvelope(t[i],a,d,s,r)*oscili(2*np.pi*note*t[i]))
+        noise.append(amplitude*adsrEnvelope(t[i],a,d,s,r)*oscili(2*np.pi*t[i],note))
     noise = np.array(noise)
     #convert to a signed 16 bit integer for pygame mixer stereo
     noise = (noise*65536/2).astype(np.int16)
@@ -247,7 +274,7 @@ class Noise:
         self.noise = []
         #Ug, really a for loop? I wanted to use numpy to be quicker than this, but not sure how to incorporate adsr otherwise.
         for i in range(0, size):
-            self.noise.append(self.amplitude*adsrEnvelope(t[i],self.a,self.d,self.s,self.r)*self.oscili(2*np.pi*self.note*t[i]))        
+            self.noise.append(self.amplitude*adsrEnvelope(t[i],self.a,self.d,self.s,self.r)*self.oscili(2*np.pi*t[i],self.note))        
         self.noise = np.array(self.noise)
         
         #convert to a signed 16 bit integer for pygame mixer stereo
@@ -290,7 +317,7 @@ class Noise:
         
         return self.channel
 
-oscilators = [guitarWave,triangleWave,squareWave]
+oscilators = [guitarWave]
 instruments = []
 for j in range(0, len(oscilators)):
     instruments.append([])
@@ -302,8 +329,7 @@ for j in range(0, len(oscilators)):
 instrument = 0
 pitch_offset = 0
 num_instruments = len(oscilators)
-for i in range(0,round(len(frequencies)/2)):
-    i+=i
+for i in [0,12,24,36]:
     instruments[0][i].play()
     pygame.time.delay(500)
 
