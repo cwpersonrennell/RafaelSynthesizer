@@ -103,7 +103,7 @@ class Noise:
         self.sustain = []
         self.release = []
         
-        self.adsr(self.duration/10, self.duration/10,3/10*self.duration,0.5*self.duration)
+        self.adsr(0, 0,self.duration,0)
     
         #Generates all corresponding wave forms/files
         self.generateAll()
@@ -223,12 +223,12 @@ print("Building Audio Samples...")
 for j in range(0, len(oscilators)):
     instruments.append([])
     for i in range(0,len(frequencies)):
-        amp = 0.125
+        amp = 0.5
         instruments[j].append(Noise(frequencies[i],5,amp,oscilators[j]))
         #print(dir(instruments[j][i].channel))
 print("Done!")
 instrument = 0
-pitch_offset = 0
+pitch_offset = 10
 num_instruments = len(oscilators)
 for i in [0,12,24,36]:
     instruments[0][i].play()
