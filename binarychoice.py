@@ -12,6 +12,7 @@ joystick.init()
 joysticks = [joystick.Joystick(x) for x in range(joystick.get_count())]
 for joy in joysticks:
     joy.init()
+
 choices = [["yes","no"]]
 
 filenames = []
@@ -21,11 +22,13 @@ for bchoice in choices:
 pygame.mixer.music.load(filenames[0][0])
 def joyStickHandler(event):
     if event.type == pygame.JOYBUTTONDOWN:
-        if(event.button == 2):
+        if(event.joy == 1):return
+        if(event.button == 10):
             pygame.mixer.music.load(filenames[0][0])
         if(event.button == 11):
             pygame.mixer.music.load(filenames[0][1])
     if event.type == pygame.JOYBUTTONUP:
+        if(event.joy == 1):return
         pygame.mixer.music.play()
                 
 try:    
