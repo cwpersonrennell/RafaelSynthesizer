@@ -23,7 +23,7 @@ def joyStickHandler(event):
     if event.type == pygame.JOYBUTTONDOWN:
         if(event.button == 2):
             pygame.mixer.music.load(filenames[0][0])
-        if(event.button == 3):
+        if(event.button == 11):
             pygame.mixer.music.load(filenames[0][1])
     if event.type == pygame.JOYBUTTONUP:
         pygame.mixer.music.play()
