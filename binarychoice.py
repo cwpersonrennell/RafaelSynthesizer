@@ -12,7 +12,7 @@ joystick.init()
 joysticks = [joystick.Joystick(x) for x in range(joystick.get_count())]
 for joy in joysticks:
     joy.init()
-
+    
 choices = [["yes","no"]]
 
 filenames = []
@@ -32,7 +32,7 @@ def joyStickHandler(event):
         pygame.mixer.music.play()
                 
 try:    
-    while(True):
+    while(len(joysticks)>1):
         for e in pygame.event.get():
             joyStickHandler(e)
 except KeyboardInterrupt:
