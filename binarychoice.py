@@ -41,6 +41,8 @@ def joyStickHandler(event):
     global currentPair
     if event.type == pygame.JOYDEVICEADDED:
         joy = joystick.Joystick(event.device_index)
+        if joy.get_name() == "PRC Switch Input Device":
+            return
         joysticks[joy.get_instance_id()]=joy
 
         dprint(f"Joystick {joy.get_instance_id()} connected")
@@ -48,6 +50,7 @@ def joyStickHandler(event):
         dprint(f"  Name: {joy.get_name()}")
 
     if event.type == pygame.JOYDEVICEREMOVED:
+        if event.instance_id not in joysticks: return
         if event.instance_id == JOYSTICK.get_instance_id():
             JOYSTICK = False
             YESBUTTON = -1
@@ -58,7 +61,7 @@ def joyStickHandler(event):
         dprint(f"Joystick {event.instance_id} removed")
         
     if event.type == pygame.JOYBUTTONDOWN:
-        if not JOYSTICK:
+        if not JOYSTICK and event.instance_id in joysticks:
             dprint("Assigning Joystick...")
             JOYSTICK = joysticks[event.instance_id]
         dprint(f"Joy: {event.instance_id}")
@@ -81,7 +84,7 @@ def joyStickHandler(event):
         if(event.button == SWITCHBUTTON):
             currentPair = (currentPair+1)%len(filenames)
     if event.type == pygame.JOYBUTTONUP:
-        if not JOYSTICK:
+        if not JOYSTICK  and event.instance_id in joysticks:
             dprint("Assigning Joystick...")
             JOYSTICK = joysticks[event.instance_id]
             return
@@ -102,4 +105,5 @@ except Exception as e:
     print(e)
     pygame.mixer.music.unload()
     pygame.quit()
+
     
