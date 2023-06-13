@@ -72,6 +72,7 @@ def joyStickHandler(event):
         if not JOYSTICK:
             dprint("Assigning Joystick...")
             JOYSTICK = joysticks[event.instance_id]
+            return
         if(event.instance_id != JOYSTICK.get_instance_id()):return
         pygame.mixer.music.play()
                 
@@ -84,7 +85,9 @@ except KeyboardInterrupt:
     pygame.quit()
     print("Goodbye!")
 
-except:
+except Exception as e:
+    print("Unknown Execption occured")
+    print(e)
     pygame.mixer.music.unload()
     pygame.quit()
     
