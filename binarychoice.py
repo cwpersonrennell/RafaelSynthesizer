@@ -19,9 +19,9 @@ choices = [["yes","no"],
 
 filenames = []
 for bchoice in choices:
-    filenames.append(["./mp3/"+bchoice[0]+".mp3","./mp3/"+bchoice[1]+".mp3"])
-print(filenames[0][0])   
-pygame.mixer.music.load(filenames[1][1])
+    filenames.append([f".\wav\{bchoice[0]}.wav",f".\wav\{bchoice[1]}.wav"])
+
+pygame.mixer.music.load(filenames[0][0])
 DEBUG = False
 
 def dprint(string):

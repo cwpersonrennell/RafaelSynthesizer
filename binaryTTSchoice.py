@@ -28,9 +28,9 @@ choices = [["yes","no"],
 
 filenames = []
 for bchoice in choices:
-    filenames.append(["./mp3/"+bchoice[0]+".mp3","./mp3/"+bchoice[1]+".mp3"])
-    engine.save_to_file(bchoice[0], f"./mp3/{bchoice[0]}.mp3")
-    engine.save_to_file(bchoice[1], f"./mp3/{bchoice[1]}.mp3")
+    filenames.append(["./wav/"+bchoice[0]+".wav","./wav/"+bchoice[1]+".wav"])
+    engine.save_to_file(bchoice[0], f"./wav/{bchoice[0]}.wav")
+    engine.save_to_file(bchoice[1], f"./wav/{bchoice[1]}.wav")
     engine.runAndWait()
     
 pygame.mixer.music.load(filenames[0][0])
