@@ -54,10 +54,7 @@ def joyStickHandler(event):
         dprint(f"Joystick {event.instance_id} removed")
         
     if event.type == pygame.JOYBUTTONDOWN:
-        joy = joystick.Joystick(event.device_index)
-        if joy.get_name() == "PRC Switch Input Device":
-            return
-        if not JOYSTICK:
+        if not JOYSTICK and event.instance_id in joysticks:
             dprint("Assigning Joystick...")
             JOYSTICK = joysticks[event.instance_id]
         dprint(f"Joy: {event.instance_id}")
@@ -77,10 +74,7 @@ def joyStickHandler(event):
             pygame.mixer.music.load(filenames[0][1])
     
     if event.type == pygame.JOYBUTTONUP:
-        joy = joystick.Joystick(event.device_index)
-        if joy.get_name() == "PRC Switch Input Device":
-            return
-        if not JOYSTICK:
+        if not JOYSTICK  and event.instance_id in joysticks:
             dprint("Assigning Joystick...")
             JOYSTICK = joysticks[event.instance_id]
             return
