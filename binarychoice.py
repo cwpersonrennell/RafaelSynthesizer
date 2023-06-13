@@ -7,17 +7,15 @@ Created on Wed May 31 08:28:14 2023
 
 import pygame
 from pygame import joystick
-pygame.init()
+from config import config
 
-joysticks = {}
-    
-choices = [["yes","no"],
-           ["hard","soft"],
-           ["wet","dry"],
-           ["dark","bright"]
-           ]
+choices =config["choices"]
+
+pygame.init()
+joysticks = {}    
 
 filenames = []
+
 for bchoice in choices:
     filenames.append([f".\wav\{bchoice[0]}.wav",f".\wav\{bchoice[1]}.wav"])
 
