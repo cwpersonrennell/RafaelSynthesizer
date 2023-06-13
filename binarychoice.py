@@ -42,9 +42,7 @@ def joyStickHandler(event):
         dprint(f"  Name: {joy.get_name()}")
 
     if event.type == pygame.JOYDEVICEREMOVED:
-        joy = joystick.Joystick(event.device_index)
-        if joy.get_name() == "PRC Switch Input Device":
-            return
+        if event.instance_id not in joysticks: return
         if event.instance_id == JOYSTICK.get_instance_id():
             JOYSTICK = False
             YESBUTTON = -1
@@ -95,4 +93,5 @@ except Exception as e:
     print(e)
     pygame.mixer.music.unload()
     pygame.quit()
+
     
