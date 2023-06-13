@@ -1,12 +1,21 @@
 # -*- coding: utf-8 -*-
 """
+Created on Tue Jun 13 14:39:54 2023
+
+@author: cpers
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Wed May 31 08:28:14 2023
 
 @author: cpers
 """
 
 import pygame
+import pyttsx3
 from pygame import joystick
+engine = pyttsx3.init()
 pygame.init()
 
 joysticks = {}
@@ -20,6 +29,9 @@ choices = [["yes","no"],
 filenames = []
 for bchoice in choices:
     filenames.append(["./mp3/"+bchoice[0]+".mp3","./mp3/"+bchoice[1]+".mp3"])
+    engine.save_to_file(bchoice[0], f"./mp3/{bchoice[0]}.mp3")
+    engine.save_to_file(bchoice[1], f"./mp3/{bchoice[1]}.mp3")
+    engine.runAndWait()
     
 pygame.mixer.music.load(filenames[0][0])
 DEBUG = False
@@ -31,14 +43,10 @@ def dprint(string):
 JOYSTICK = False
 YESBUTTON =-1
 NOBUTTON = -1
-SWITCHBUTTON=-1
-currentPair = 0
 def joyStickHandler(event):
     global JOYSTICK
     global YESBUTTON
     global NOBUTTON
-    global SWITCHBUTTON
-    global currentPair
     if event.type == pygame.JOYDEVICEADDED:
         joy = joystick.Joystick(event.device_index)
         joysticks[joy.get_instance_id()]=joy
@@ -52,7 +60,6 @@ def joyStickHandler(event):
             JOYSTICK = False
             YESBUTTON = -1
             NOBUTTON = -1
-            SWITCHBUTTON = -1
         del joysticks[event.instance_id]
 
         dprint(f"Joystick {event.instance_id} removed")
@@ -71,15 +78,12 @@ def joyStickHandler(event):
             YESBUTTON = event.button
         elif YESBUTTON!=event.button and NOBUTTON == - 1:
             NOBUTTON = event.button
-        elif YESBUTTON!=event.button and NOBUTTON !=event.button and SWITCHBUTTON==-1:
-            SWITCHBUTTON=event.button
-            
+        
         if(event.button == YESBUTTON):
-            pygame.mixer.music.load(filenames[currentPair][0])
+            pygame.mixer.music.load(filenames[0][0])
         if(event.button == NOBUTTON):
-            pygame.mixer.music.load(filenames[currentPair][1])
-        if(event.button == SWITCHBUTTON):
-            currentPair = (currentPair+1)%len(filenames)
+            pygame.mixer.music.load(filenames[0][1])
+    
     if event.type == pygame.JOYBUTTONUP:
         if not JOYSTICK:
             dprint("Assigning Joystick...")
