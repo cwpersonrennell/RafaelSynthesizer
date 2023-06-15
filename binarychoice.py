@@ -54,6 +54,7 @@ def joyStickHandler(event):
             YESBUTTON = -1
             NOBUTTON = -1
             SWITCHBUTTON = -1
+            currentPair = 0
         del joysticks[event.instance_id]
 
         dprint(f"Joystick {event.instance_id} removed")
@@ -87,6 +88,22 @@ def joyStickHandler(event):
             JOYSTICK = joysticks[event.instance_id]
             return
         if(event.instance_id != JOYSTICK.get_instance_id()):return
+        if(event.button == SWITCHBUTTON):
+            ##Play the next pair of options, in order.
+            ##This is blocking, but deliberate.
+            pygame.mixer.music.load("./wav/CHOICES.wav")
+            pygame.mixer.music.play()
+            while(pygame.mixer.music.get_busy()):
+                pass
+            pygame.mixer.music.load(filenames[currentPair][0])
+            pygame.mixer.music.play()
+            while(pygame.mixer.music.get_busy()):
+                pass
+            pygame.mixer.music.load(filenames[currentPair][1])
+            pygame.mixer.music.play()
+            while(pygame.mixer.music.get_busy()):
+                pass
+            return
         pygame.mixer.music.play()
                 
 try:

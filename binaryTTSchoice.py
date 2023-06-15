@@ -17,12 +17,11 @@ import pyttsx3
 from config import config
 engine = pyttsx3.init()
 choices =config["choices"]
-
-filenames = []
+engine.save_to_file("Now choosing between:","./wav/CHOICES.wav")
 for bchoice in choices:
-    filenames.append(["./wav/"+bchoice[0]+".wav","./wav/"+bchoice[1]+".wav"])
     engine.save_to_file(bchoice[0], f"./wav/{bchoice[0]}.wav")
     engine.save_to_file(bchoice[1], f"./wav/{bchoice[1]}.wav")
     engine.runAndWait()
+    print(f"Generated WAV files for {bchoice[0]} and {bchoice[1]}")
     
-print("Created and saved the text to speech!")
+

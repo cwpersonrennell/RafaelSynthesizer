@@ -11,5 +11,6 @@ config["choices"] = [
     ["yes","no"],
     ["hard","soft"],
     ["wet","dry"],
-    ["dark","bright"]
+    ["dark","bright"],
+    ["rough","smooth"]
                    ]
